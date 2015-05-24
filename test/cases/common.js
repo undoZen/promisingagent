@@ -4,7 +4,6 @@ var promisingagent = require('../../');
 var Promise = require('bluebird');
 var qs = require('qs');
 function serializer(query) {
-
     return qs.stringify(query, {arrayFormat: 'repeat'});
 }
 
