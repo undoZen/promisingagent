@@ -4,7 +4,8 @@
   "description": "superagent wrapped with bluebird with convenient helpers",
   "main": "index.js",
   "scripts": {
-    "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/*.js && istanbul report --report cobertura --report html --report text-summary"
+    "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/*.js && istanbul report --report cobertura --report html --report text-summary",
+    "test-browser": "browserify test/cases/browser.js > test/browser/test.js && node test/browser/server"
   },
   "repository": {
     "type": "git",
@@ -24,13 +25,14 @@
   "homepage": "https://github.com/undoZen/promisingagent#readme",
   "dependencies": {
     "bluebird": "^2.9",
-    "qs": "^2.4.2",
+    "qs": "^2",
     "superagent": "^1.2"
   },
   "devDependencies": {
     "browserify": "^10.2.1",
     "concat-stream": "^1.4.8",
     "istanbul-harmony": "^0.3.12",
+    "tap-browser-color": "^0.1.2",
     "tape": "^4.0.0"
   }
 }

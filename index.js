@@ -9,7 +9,8 @@ exports.Promise = Promise;
 exports.superagent = superagent;
 var Request = promisingagent.Request = superagent.Request;
 exports.querySerializer = qs.stringify;
-exports.bodySerializer = superagent.serialize;
+var serialize = exports.bodySerializer = superagent.serialize;
+serialize['application/x-www-form-urlencoded'] = qs.stringify;
 
 Request.prototype.end = (function(origEnd) {
     return function (fn) {
