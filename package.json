@@ -7,7 +7,7 @@
     "index.js"
   ],
   "scripts": {
-    "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/*.js && istanbul report --report cobertura --report html --report text-summary",
+    "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/node.js && istanbul report --report cobertura --report html --report text-summary",
     "test-browser": "browserify test/cases/browser.js > test/browser/test.js && node test/browser/server"
   },
   "repository": {
@@ -28,7 +28,7 @@
   "homepage": "https://github.com/undoZen/promisingagent#readme",
   "dependencies": {
     "bluebird": "^2.9",
-    "qs": "^2",
+    "qs": "^3",
     "superagent": "^1.2"
   },
   "devDependencies": {

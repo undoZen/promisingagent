@@ -8,7 +8,7 @@ module.exports = http.createServer(function (req, res) {
     if (req.url === '/') {
         fstream = fs.createReadStream(__dirname + '/browser/index.html');
         res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-    } else if (req.url === '/test.js' || req.url === '/es5shimsham.js') {
+    } else if (req.url === '/test.js' || req.url === '/ie8fix.js') {
         fstream = fs.createReadStream(__dirname + '/browser' + req.url);
         res.writeHead(200, {'Content-Type': 'application/javascript; charset=utf-8'});
     }
