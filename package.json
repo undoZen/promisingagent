@@ -1,0 +1,36 @@
+{
+  "name": "promisingagent",
+  "version": "0.0.0",
+  "description": "superagent wrapped with bluebird with convenient helpers",
+  "main": "index.js",
+  "scripts": {
+    "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/*.js && istanbul report --report cobertura --report html --report text-summary"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/undoZen/promisingagent.git"
+  },
+  "keywords": [
+    "request",
+    "superagent",
+    "promise",
+    "bluebird"
+  ],
+  "author": "undoZen <opensource@undozen.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/undoZen/promisingagent/issues"
+  },
+  "homepage": "https://github.com/undoZen/promisingagent#readme",
+  "dependencies": {
+    "bluebird": "^2.9",
+    "qs": "^2.4.2",
+    "superagent": "^1.2"
+  },
+  "devDependencies": {
+    "browserify": "^10.2.1",
+    "concat-stream": "^1.4.8",
+    "istanbul-harmony": "^0.3.12",
+    "tape": "^4.0.0"
+  }
+}
