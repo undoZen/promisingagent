@@ -1,9 +1,11 @@
 {
   "name": "promisingagent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "superagent wrapped with bluebird with convenient helpers",
   "main": "index.js",
-  "files": ["index.js"],
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/*.js && istanbul report --report cobertura --report html --report text-summary",
     "test-browser": "browserify test/cases/browser.js > test/browser/test.js && node test/browser/server"
