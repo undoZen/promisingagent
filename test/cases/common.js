@@ -20,6 +20,18 @@ module.exports = function (addHost) {
         });
     });
 
+    tape('do not reject non-2xx response', function (test) {
+        test.plan(4);
+        var request = promisingagent(addHost('/404')).end();
+        test.ok(request instanceof Promise);
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'GET');
+            test.equal(response.body.url, '/404');
+        });
+    });
+
     tape('compatible with node style callback', function (test) {
         test.plan(4);
         promisingagent(addHost('/hello')).end(function (err, response) {

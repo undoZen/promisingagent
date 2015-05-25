@@ -15,8 +15,14 @@ serialize['application/x-www-form-urlencoded'] = qs.stringify;
 Request.prototype.end = (function(origEnd) {
     return function (fn) {
         var self = this;
-        this.promise = this.promise || exports.Promise.fromNode(function (callback) {
-            origEnd.call(self, callback);
+        this.promise = this.promise || new Promise(function (resolve, reject) {
+            origEnd.call(self, function (err, response) {
+                if (err && !err.status) {
+                    reject(err);
+                } else {
+                    resolve(response);
+                }
+            });
         });
         if (typeof fn === 'function') {
             this.promise.nodeify(fn);
