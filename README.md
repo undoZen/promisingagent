@@ -40,5 +40,7 @@ promisingagent('POST', '/hello', {
 ```
 You can pass request object directly to promise customer or call it's `.then()` method directly, in this way the request object is like a lazy evaluated promise, `request.then(...)` will trigger it to start requesting.
 
+note that in 2.0 promisingagent do not treat non-2xx response as error, behaves like using superagent@<1.0
+
 ## license
 MIT
