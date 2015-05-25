@@ -52,13 +52,11 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
     opts = opts || {};
     method = (method||opts.method||'').toUpperCase() || 'GET';
     if (opts.query) {
-        console.log(opts.query);
         query = exports.querySerializer(opts.query);
         url += ~url.indexOf('?')
             ? '&' + query
             : '?' + query;
     }
-    console.log('url', url);
     var request = new Request(method, url);
     if (method !== 'GET' && method !== 'HEAD') {
         request.type(opts.type || 'form');
