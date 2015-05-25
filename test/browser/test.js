@@ -16,8 +16,14 @@ serialize['application/x-www-form-urlencoded'] = qs.stringify;
 Request.prototype.end = (function(origEnd) {
     return function (fn) {
         var self = this;
-        this.promise = this.promise || exports.Promise.fromNode(function (callback) {
-            origEnd.call(self, callback);
+        this.promise = this.promise || new Promise(function (resolve, reject) {
+            origEnd.call(self, function (err, response) {
+                if (err && !err.status) {
+                    reject(err);
+                } else {
+                    resolve(response);
+                }
+            });
         });
         if (typeof fn === 'function') {
             this.promise.nodeify(fn);
@@ -12951,6 +12957,18 @@ module.exports = function (addHost) {
             test.ok(response.status && response.body);
             test.equal(response.body.method, 'GET');
             test.equal(response.body.url, '/hello');
+        });
+    });
+
+    tape('do not reject non-2xx response', function (test) {
+        test.plan(4);
+        var request = promisingagent(addHost('/404')).end();
+        test.ok(request instanceof Promise);
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'GET');
+            test.equal(response.body.url, '/404');
         });
     });
 
