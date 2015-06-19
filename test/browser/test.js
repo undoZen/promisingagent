@@ -4,6 +4,7 @@
 var Promise = require('bluebird');
 var superagent = require('superagent');
 var qs = require('qs');
+var methods = require('methods');
 
 exports = module.exports = promisingagent;
 exports.Promise = Promise;
@@ -53,13 +54,11 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
     opts = opts || {};
     method = (method||opts.method||'').toUpperCase() || 'GET';
     if (opts.query) {
-        console.log(opts.query);
         query = exports.querySerializer(opts.query);
         url += ~url.indexOf('?')
             ? '&' + query
             : '?' + query;
     }
-    console.log('url', url);
     var request = new Request(method, url);
     if (method !== 'GET' && method !== 'HEAD') {
         request.type(opts.type || 'form');
@@ -70,7 +69,15 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
     return request;
 }
 
-},{"bluebird":2,"qs":27,"superagent":32}],2:[function(require,module,exports){
+methods.forEach(function (method) {
+    var mu = method.toUpperCase();
+    exports[method] = exports[mu] = promisingagent.bind(null, mu);
+    if (method === 'delete') {
+        exports.del = exports.DEL = exports['delete'];
+    }
+});
+
+},{"bluebird":2,"methods":27,"qs":28,"superagent":33}],2:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -97,7 +104,7 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
  * 
  */
 /**
- * bluebird build version 2.9.25
+ * bluebird build version 2.9.30
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -258,13 +265,18 @@ if (!util.hasDevTools) {
     Async.prototype.invoke = AsyncInvoke;
     Async.prototype.settlePromises = AsyncSettlePromises;
 } else {
+    if (schedule.isStatic) {
+        schedule = function(fn) { setTimeout(fn, 0); };
+    }
     Async.prototype.invokeLater = function (fn, receiver, arg) {
         if (this._trampolineEnabled) {
             AsyncInvokeLater.call(this, fn, receiver, arg);
         } else {
-            setTimeout(function() {
-                fn.call(receiver, arg);
-            }, 100);
+            this._schedule(function() {
+                setTimeout(function() {
+                    fn.call(receiver, arg);
+                }, 100);
+            });
         }
     };
 
@@ -272,9 +284,9 @@ if (!util.hasDevTools) {
         if (this._trampolineEnabled) {
             AsyncInvoke.call(this, fn, receiver, arg);
         } else {
-            setTimeout(function() {
+            this._schedule(function() {
                 fn.call(receiver, arg);
-            }, 0);
+            });
         }
     };
 
@@ -282,9 +294,9 @@ if (!util.hasDevTools) {
         if (this._trampolineEnabled) {
             AsyncSettlePromises.call(this, promise);
         } else {
-            setTimeout(function() {
+            this._schedule(function() {
                 promise._settlePromises();
-            }, 0);
+            });
         }
     };
 }
@@ -1211,7 +1223,13 @@ if (debugging) {
     async.disableTrampolineIfNecessary();
 }
 
+Promise.prototype._ignoreRejections = function() {
+    this._unsetRejectionIsUnhandled();
+    this._bitField = this._bitField | 16777216;
+};
+
 Promise.prototype._ensurePossibleRejectionHandled = function () {
+    if ((this._bitField & 16777216) !== 0) return;
     this._setRejectionIsUnhandled();
     async.invokeLater(this._notifyUnhandledRejection, this, undefined);
 };
@@ -1356,6 +1374,10 @@ var returner = function () {
 var thrower = function () {
     throw this;
 };
+var returnUndefined = function() {};
+var throwUndefined = function() {
+    throw undefined;
+};
 
 var wrapper = function (value, action) {
     if (action === 1) {
@@ -1372,6 +1394,8 @@ var wrapper = function (value, action) {
 
 Promise.prototype["return"] =
 Promise.prototype.thenReturn = function (value) {
+    if (value === undefined) return this.then(returnUndefined);
+
     if (wrapsPrimitiveReceiver && isPrimitive(value)) {
         return this._then(
             wrapper(value, 2),
@@ -1386,6 +1410,8 @@ Promise.prototype.thenReturn = function (value) {
 
 Promise.prototype["throw"] =
 Promise.prototype.thenThrow = function (reason) {
+    if (reason === undefined) return this.then(throwUndefined);
+
     if (wrapsPrimitiveReceiver && isPrimitive(reason)) {
         return this._then(
             wrapper(reason, 1),
@@ -3072,7 +3098,7 @@ PromiseArray.prototype._init = function init(_, resolveValueIfEmpty) {
         if (maybePromise instanceof Promise) {
             maybePromise = maybePromise._target();
             if (isResolved) {
-                maybePromise._unsetRejectionIsUnhandled();
+                maybePromise._ignoreRejections();
             } else if (maybePromise._isPending()) {
                 maybePromise._proxyPromiseArray(this, i);
             } else if (maybePromise._isFulfilled()) {
@@ -3273,10 +3299,10 @@ var defaultSuffix = "Async";
 var defaultPromisified = {__isPromisified__: true};
 var noCopyPropsPattern =
     /^(?:length|name|arguments|caller|callee|prototype|__isPromisified__)$/;
-var defaultFilter = function(name, func) {
+var defaultFilter = function(name) {
     return util.isIdentifier(name) &&
         name.charAt(0) !== "_" &&
-        !util.isClass(func);
+        name !== "constructor";
 };
 
 function propsFilter(key) {
@@ -3321,6 +3347,7 @@ function promisifiableMethods(obj, suffix, suffixRegexp, filter) {
         var passesDefaultFilter = filter === defaultFilter
             ? true : defaultFilter(key, value, obj);
         if (typeof value === "function" &&
+            !util.isNativeFunctionMethod(value) &&
             !isPromisified(value) &&
             !hasPromisified(obj, key, suffix) &&
             filter(key, value, obj, passesDefaultFilter)) {
@@ -3420,6 +3447,7 @@ function(callback, receiver, originalName, fn) {
                         "nodebackForPromise",
                         "tryCatch",
                         "errorObj",
+                        "notEnumerableProp",
                         "INTERNAL","'use strict';                            \n\
         var ret = function (Parameters) {                                    \n\
             'use strict';                                                    \n\
@@ -3437,7 +3465,7 @@ function(callback, receiver, originalName, fn) {
             }                                                                \n\
             return promise;                                                  \n\
         };                                                                   \n\
-        ret.__isPromisified__ = true;                                        \n\
+        notEnumerableProp(ret, '__isPromisified__', true);                   \n\
         return ret;                                                          \n\
         "
         .replace("Parameters", parameterDeclaration(newParameterCount))
@@ -3451,6 +3479,7 @@ function(callback, receiver, originalName, fn) {
             nodebackForPromise,
             util.tryCatch,
             util.errorObj,
+            util.notEnumerableProp,
             INTERNAL
         );
 };
@@ -3477,7 +3506,7 @@ function makeNodePromisifiedClosure(callback, receiver, _, fn) {
         }
         return promise;
     }
-    promisified.__isPromisified__ = true;
+    util.notEnumerableProp(promisified, "__isPromisified__", true);
     return promisified;
 }
 
@@ -3924,23 +3953,16 @@ Promise.reduce = function (promises, fn, initialValue, _each) {
 },{"./async.js":2,"./util.js":38}],31:[function(_dereq_,module,exports){
 "use strict";
 var schedule;
+var util = _dereq_("./util");
 var noAsyncScheduler = function() {
     throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
 };
-if (_dereq_("./util.js").isNode) {
-    var version = process.versions.node.split(".").map(Number);
-    schedule = (version[0] === 0 && version[1] > 10) || (version[0] > 0)
-        ? global.setImmediate : process.nextTick;
-
-    if (!schedule) {
-        if (typeof setImmediate !== "undefined") {
-            schedule = setImmediate;
-        } else if (typeof setTimeout !== "undefined") {
-            schedule = setTimeout;
-        } else {
-            schedule = noAsyncScheduler;
-        }
-    }
+if (util.isNode && typeof MutationObserver === "undefined") {
+    var GlobalSetImmediate = global.setImmediate;
+    var ProcessNextTick = process.nextTick;
+    schedule = util.isRecentNode
+                ? function(fn) { GlobalSetImmediate.call(global, fn); }
+                : function(fn) { ProcessNextTick.call(process, fn); };
 } else if (typeof MutationObserver !== "undefined") {
     schedule = function(fn) {
         var div = document.createElement("div");
@@ -3962,7 +3984,7 @@ if (_dereq_("./util.js").isNode) {
 }
 module.exports = schedule;
 
-},{"./util.js":38}],32:[function(_dereq_,module,exports){
+},{"./util":38}],32:[function(_dereq_,module,exports){
 "use strict";
 module.exports =
     function(Promise, PromiseArray) {
@@ -4738,13 +4760,17 @@ var inheritedDataKeys = (function() {
 
 })();
 
+var thisAssignmentPattern = /this\s*\.\s*\S+\s*=/;
 function isClass(fn) {
     try {
         if (typeof fn === "function") {
             var keys = es5.names(fn.prototype);
-            if (es5.isES5) return keys.length > 1;
-            return keys.length > 0 &&
-                   !(keys.length === 1 && keys[0] === "constructor");
+            if (((es5.isES5 && keys.length > 1) ||
+                (keys.length > 0 &&
+                !(keys.length === 1 && keys[0] === "constructor"))) ||
+                thisAssignmentPattern.test(fn + "")) {
+                return true;
+            }
         }
         return false;
     } catch (e) {
@@ -4829,6 +4855,13 @@ function copyDescriptors(from, to, filter) {
     }
 }
 
+function isNativeFunctionMethod(fn) {
+    return fn === fn.call ||
+           fn === fn.toString ||
+           fn === fn.bind ||
+           fn === fn.apply;
+}
+
 var ret = {
     isClass: isClass,
     isIdentifier: isIdentifier,
@@ -4859,8 +4892,13 @@ var ret = {
     hasDevTools: typeof chrome !== "undefined" && chrome &&
                  typeof chrome.loadTimes === "function",
     isNode: typeof process !== "undefined" &&
-        classString(process).toLowerCase() === "[object process]"
+        classString(process).toLowerCase() === "[object process]",
+    isNativeFunctionMethod: isNativeFunctionMethod
 };
+ret.isRecentNode = ret.isNode && (function() {
+    var version = process.versions.node.split(".").map(Number);
+    return (version[0] === 0 && version[1] > 10) || (version[0] > 0);
+})();
 try {throw new Error(); } catch (e) {ret.lastLineError = e;}
 module.exports = ret;
 
@@ -6718,14 +6756,14 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 },{}],7:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m,
-      eLen = nBytes * 8 - mLen - 1,
-      eMax = (1 << eLen) - 1,
-      eBias = eMax >> 1,
-      nBits = -7,
-      i = isLE ? (nBytes - 1) : 0,
-      d = isLE ? -1 : 1,
-      s = buffer[offset + i]
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
 
   i += d
 
@@ -6751,14 +6789,14 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 }
 
 exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c,
-      eLen = nBytes * 8 - mLen - 1,
-      eMax = (1 << eLen) - 1,
-      eBias = eMax >> 1,
-      rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
-      i = isLE ? 0 : (nBytes - 1),
-      d = isLE ? 1 : -1,
-      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
 
   value = Math.abs(value)
 
@@ -9762,9 +9800,53 @@ function base64DetectIncompleteChar(buffer) {
 }
 
 },{"buffer":5}],27:[function(require,module,exports){
+
+var http = require('http');
+
+/* istanbul ignore next: implementation differs on version */
+if (http.METHODS) {
+
+  module.exports = http.METHODS.map(function(method){
+    return method.toLowerCase();
+  });
+
+} else {
+
+  module.exports = [
+    'get',
+    'post',
+    'put',
+    'head',
+    'delete',
+    'options',
+    'trace',
+    'copy',
+    'lock',
+    'mkcol',
+    'move',
+    'purge',
+    'propfind',
+    'proppatch',
+    'unlock',
+    'report',
+    'mkactivity',
+    'checkout',
+    'merge',
+    'm-search',
+    'notify',
+    'subscribe',
+    'unsubscribe',
+    'patch',
+    'search',
+    'connect'
+  ];
+
+}
+
+},{"http":4}],28:[function(require,module,exports){
 module.exports = require('./lib/');
 
-},{"./lib/":28}],28:[function(require,module,exports){
+},{"./lib/":29}],29:[function(require,module,exports){
 // Load modules
 
 var Stringify = require('./stringify');
@@ -9781,7 +9863,7 @@ module.exports = {
     parse: Parse
 };
 
-},{"./parse":29,"./stringify":30}],29:[function(require,module,exports){
+},{"./parse":30,"./stringify":31}],30:[function(require,module,exports){
 // Load modules
 
 var Utils = require('./utils');
@@ -9876,7 +9958,9 @@ internals.parseKeys = function (key, val, options) {
 
     // Transform dot notation to bracket notation
 
-    key = key.replace(/\.([^\.\[]+)/g, '[$1]');
+    if (options.allowDots) {
+        key = key.replace(/\.([^\.\[]+)/g, '[$1]');
+    }
 
     // The regex chunks
 
@@ -9927,6 +10011,7 @@ module.exports = function (str, options) {
     options.depth = typeof options.depth === 'number' ? options.depth : internals.depth;
     options.arrayLimit = typeof options.arrayLimit === 'number' ? options.arrayLimit : internals.arrayLimit;
     options.parseArrays = options.parseArrays !== false;
+    options.allowDots = options.allowDots !== false;
     options.parameterLimit = typeof options.parameterLimit === 'number' ? options.parameterLimit : internals.parameterLimit;
     options.strictNullHandling = typeof options.strictNullHandling === 'boolean' ? options.strictNullHandling : internals.strictNullHandling;
 
@@ -9946,7 +10031,7 @@ module.exports = function (str, options) {
     return Utils.compact(obj);
 };
 
-},{"./utils":31}],30:[function(require,module,exports){
+},{"./utils":32}],31:[function(require,module,exports){
 // Load modules
 
 var Utils = require('./utils');
@@ -10069,7 +10154,7 @@ module.exports = function (obj, options) {
     return keys.join(delimiter);
 };
 
-},{"./utils":31}],31:[function(require,module,exports){
+},{"./utils":32}],32:[function(require,module,exports){
 // Load modules
 
 
@@ -10261,7 +10346,7 @@ exports.isBuffer = function (obj) {
               obj.constructor.isBuffer(obj));
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -11386,7 +11471,7 @@ request.put = function(url, data, fn){
 
 module.exports = request;
 
-},{"emitter":33,"reduce":34}],33:[function(require,module,exports){
+},{"emitter":34,"reduce":35}],34:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -11552,7 +11637,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 
 /**
  * Reduce `arr` with `fn`.
@@ -11577,7 +11662,7 @@ module.exports = function(arr, fn, initial){
   
   return curr;
 };
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /**
  * Activate the runner by overriding `console.log` to intercept tap output.
  * Call the return value to undo the override.
@@ -11638,7 +11723,7 @@ function style() {
     s.backgroundColor = colors.PENDING;
   }
 }
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 (function (process){
 var defined = require('defined');
 var createDefaultStream = require('./lib/default_stream');
@@ -11782,7 +11867,7 @@ function createHarness (conf_) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/default_stream":37,"./lib/results":38,"./lib/test":39,"_process":13,"defined":43,"through":47}],37:[function(require,module,exports){
+},{"./lib/default_stream":38,"./lib/results":39,"./lib/test":40,"_process":13,"defined":44,"through":48}],38:[function(require,module,exports){
 (function (process){
 var through = require('through');
 var fs = require('fs');
@@ -11817,7 +11902,7 @@ module.exports = function () {
 };
 
 }).call(this,require('_process'))
-},{"_process":13,"fs":3,"through":47}],38:[function(require,module,exports){
+},{"_process":13,"fs":3,"through":48}],39:[function(require,module,exports){
 (function (process){
 var EventEmitter = require('events').EventEmitter;
 var inherits = require('inherits');
@@ -12010,7 +12095,7 @@ function has (obj, prop) {
 }
 
 }).call(this,require('_process'))
-},{"_process":13,"events":9,"inherits":44,"object-inspect":45,"resumer":46,"through":47}],39:[function(require,module,exports){
+},{"_process":13,"events":9,"inherits":45,"object-inspect":46,"resumer":47,"through":48}],40:[function(require,module,exports){
 (function (process,__dirname){
 var deepEqual = require('deep-equal');
 var defined = require('defined');
@@ -12510,7 +12595,7 @@ Test.skip = function (name_, _opts, _cb) {
 
 
 }).call(this,require('_process'),"/node_modules/tape/lib")
-},{"_process":13,"deep-equal":40,"defined":43,"events":9,"inherits":44,"path":12}],40:[function(require,module,exports){
+},{"_process":13,"deep-equal":41,"defined":44,"events":9,"inherits":45,"path":12}],41:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -12606,7 +12691,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":41,"./lib/keys.js":42}],41:[function(require,module,exports){
+},{"./lib/is_arguments.js":42,"./lib/keys.js":43}],42:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -12628,7 +12713,7 @@ function unsupported(object){
     false;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -12639,16 +12724,16 @@ function shim (obj) {
   return keys;
 }
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = function () {
     for (var i = 0; i < arguments.length; i++) {
         if (arguments[i] !== undefined) return arguments[i];
     }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],45:[function(require,module,exports){
+},{"dup":10}],46:[function(require,module,exports){
 module.exports = function inspect_ (obj, opts, depth, seen) {
     if (!opts) opts = {};
     
@@ -12792,7 +12877,7 @@ function inspectString (str) {
     }
 }
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 (function (process){
 var through = require('through');
 var nextTick = typeof setImmediate !== 'undefined'
@@ -12825,7 +12910,7 @@ module.exports = function (write, end) {
 };
 
 }).call(this,require('_process'))
-},{"_process":13,"through":47}],47:[function(require,module,exports){
+},{"_process":13,"through":48}],48:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -12937,7 +13022,17 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":13,"stream":25}],48:[function(require,module,exports){
+},{"_process":13,"stream":25}],49:[function(require,module,exports){
+'use strict';
+require('tap-browser-color')();
+
+var addHost = function (url) {
+    return url;
+};
+
+require('./common')(addHost);
+
+},{"./common":50,"tap-browser-color":36}],50:[function(require,module,exports){
 'use strict';
 var tape = require('tape');
 var promisingagent = require('../../');
@@ -13035,6 +13130,27 @@ module.exports = function (addHost) {
         });
     });
 
+    tape('request.post() alias request("POST", ...)', function (test) {
+        test.plan(4);
+        var request = promisingagent.post(addHost('/post'), {
+            query: {
+                name: 'uz',
+                arr: [1,2,3],
+            },
+            body: {
+                hello: 'world',
+                arr: [4,5,6],
+            },
+        }).end();
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'POST');
+            test.equal(response.body.url, '/post?name=uz&arr%5B0%5D=1&arr%5B1%5D=2&arr%5B2%5D=3');
+            test.equal(response.body.body, 'hello=world&arr%5B0%5D=4&arr%5B1%5D=5&arr%5B2%5D=6');
+        });
+    });
+
     tape('set method in opts and change default serializer', function (test) {
         test.plan(4);
         promisingagent.bodySerializer['application/x-www-form-urlencoded'] = serializer;
@@ -13061,14 +13177,4 @@ module.exports = function (addHost) {
 
 }
 
-},{"../../":1,"bluebird":2,"qs":27,"tape":36}],49:[function(require,module,exports){
-'use strict';
-require('tap-browser-color')();
-
-var addHost = function (url) {
-    return url;
-};
-
-require('./common')(addHost);
-
-},{"./common":48,"tap-browser-color":35}]},{},[49]);
+},{"../../":1,"bluebird":2,"qs":28,"tape":37}]},{},[49]);

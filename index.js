@@ -3,6 +3,7 @@
 var Promise = require('bluebird');
 var superagent = require('superagent');
 var qs = require('qs');
+var methods = require('methods');
 
 exports = module.exports = promisingagent;
 exports.Promise = Promise;
@@ -66,3 +67,11 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
     }
     return request;
 }
+
+methods.forEach(function (method) {
+    var mu = method.toUpperCase();
+    exports[method] = exports[mu] = promisingagent.bind(null, mu);
+    if (method === 'delete') {
+        exports.del = exports.DEL = exports['delete'];
+    }
+});

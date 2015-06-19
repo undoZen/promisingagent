@@ -28,6 +28,7 @@
   "homepage": "https://github.com/undoZen/promisingagent#readme",
   "dependencies": {
     "bluebird": "^2.9",
+    "methods": "^1.1.1",
     "qs": "^3",
     "superagent": "^1.2"
   },
