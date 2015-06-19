@@ -3,7 +3,6 @@
 var Promise = require('bluebird');
 var superagent = require('superagent');
 var qs = require('qs');
-var methods = require('methods');
 
 exports = module.exports = promisingagent;
 exports.Promise = Promise;
@@ -68,7 +67,34 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
     return request;
 }
 
-methods.forEach(function (method) {
+[
+    "checkout",
+    "connect",
+    "copy",
+    "delete",
+    "get",
+    "head",
+    "lock",
+    "m-search",
+    "merge",
+    "mkactivity",
+    "mkcol",
+    "move",
+    "notify",
+    "options",
+    "patch",
+    "post",
+    "propfind",
+    "proppatch",
+    "purge",
+    "put",
+    "report",
+    "search",
+    "subscribe",
+    "trace",
+    "unlock",
+    "unsubscribe"
+].forEach(function (method) {
     var mu = method.toUpperCase();
     exports[method] = exports[mu] = promisingagent.bind(null, mu);
     if (method === 'delete') {
