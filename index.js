@@ -3,6 +3,35 @@
 var Promise = require('bluebird');
 var superagent = require('superagent');
 var qs = require('qs');
+var extend = require('extend');
+var methods = [
+    "checkout",
+    "connect",
+    "copy",
+    "delete",
+    "get",
+    "head",
+    "lock",
+    "m-search",
+    "merge",
+    "mkactivity",
+    "mkcol",
+    "move",
+    "notify",
+    "options",
+    "patch",
+    "post",
+    "propfind",
+    "proppatch",
+    "purge",
+    "put",
+    "report",
+    "search",
+    "subscribe",
+    "trace",
+    "unlock",
+    "unsubscribe"
+];
 
 exports = module.exports = promisingagent;
 exports.Promise = Promise;
@@ -40,17 +69,29 @@ Request.prototype.end = (function(origEnd) {
     }
 });
 
-function promisingagent(methodOrUrl, urlOrOpts, opts) {
+function promisingagent() {
     var method, url, query;
-    if (typeof urlOrOpts === 'string') {
-        method = methodOrUrl;
-        url = urlOrOpts;
-    } else {
-        url = methodOrUrl;
-        opts = urlOrOpts;
+    var args = Array.prototype.slice.call(arguments);
+    var strs = [];
+    for (var i = args.length - 1; i >= 0; i--) {
+        if (typeof args[i] === 'string') {
+            strs = strs.concat(args.splice(i, 1));
+        }
     }
-    opts = opts || {};
+    strs.reverse();
+    if (strs.length >= 2) {
+        method = strs[0];
+        url = strs[1];
+    } else if (strs[0]) {
+        if (methods.indexOf(strs[0].toLowerCase()) > -1) {
+            method = strs[0];
+        } else {
+            url = strs[0];
+        }
+    }
+    var opts = extend.apply(null, [true, {}].concat(args));
     method = (method||opts.method||'').toUpperCase() || 'GET';
+    url = url || opts.url;
     if (opts.query) {
         query = exports.querySerializer(opts.query);
         url += ~url.indexOf('?')
@@ -64,37 +105,16 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
     if (opts.body) {
         request.send(opts.body);
     }
+    if (opts.headers) {
+        Object.keys(opts.headers).forEach(function (key) {
+            request.set(key.toLowerCase(), opts.headers[key]);
+        });
+        request.send(opts.body);
+    }
     return request;
 }
 
-[
-    "checkout",
-    "connect",
-    "copy",
-    "delete",
-    "get",
-    "head",
-    "lock",
-    "m-search",
-    "merge",
-    "mkactivity",
-    "mkcol",
-    "move",
-    "notify",
-    "options",
-    "patch",
-    "post",
-    "propfind",
-    "proppatch",
-    "purge",
-    "put",
-    "report",
-    "search",
-    "subscribe",
-    "trace",
-    "unlock",
-    "unsubscribe"
-].forEach(function (method) {
+methods.forEach(function (method) {
     var mu = method.toUpperCase();
     exports[method] = exports[mu] = promisingagent.bind(null, mu);
     if (method === 'delete') {

@@ -116,6 +116,38 @@ module.exports = function (addHost) {
         });
     });
 
+    tape('simple change headers and set url in opts', function (test) {
+        test.plan(6);
+        var request = promisingagent.post({
+            url: addHost('/post'),
+            headers: {
+                'user-agent': 'promisingagent',
+                'x-custom-header': 'a',
+            },
+            query: {
+                name: 'uz',
+                arr: [1,2,3],
+            },
+            body: {
+                hello: 'world',
+                arr: [4,5,6],
+            },
+        }, {
+            headers: {
+                'x-custom-header': 'b',
+            },
+        }).end();
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'POST');
+            test.equal(response.body.headers['user-agent'], 'promisingagent');
+            test.equal(response.body.headers['x-custom-header'], 'b');
+            test.equal(response.body.url, '/post?name=uz&arr%5B0%5D=1&arr%5B1%5D=2&arr%5B2%5D=3');
+            test.equal(response.body.body, 'hello=world&arr%5B0%5D=4&arr%5B1%5D=5&arr%5B2%5D=6');
+        });
+    });
+
     tape('set method in opts and change default serializer', function (test) {
         test.plan(4);
         promisingagent.bodySerializer['application/x-www-form-urlencoded'] = serializer;
