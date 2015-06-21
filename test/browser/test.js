@@ -4,7 +4,35 @@
 var Promise = require('bluebird');
 var superagent = require('superagent');
 var qs = require('qs');
-var methods = require('methods');
+var extend = require('extend');
+var methods = [
+    "checkout",
+    "connect",
+    "copy",
+    "delete",
+    "get",
+    "head",
+    "lock",
+    "m-search",
+    "merge",
+    "mkactivity",
+    "mkcol",
+    "move",
+    "notify",
+    "options",
+    "patch",
+    "post",
+    "propfind",
+    "proppatch",
+    "purge",
+    "put",
+    "report",
+    "search",
+    "subscribe",
+    "trace",
+    "unlock",
+    "unsubscribe"
+];
 
 exports = module.exports = promisingagent;
 exports.Promise = Promise;
@@ -42,17 +70,29 @@ Request.prototype.end = (function(origEnd) {
     }
 });
 
-function promisingagent(methodOrUrl, urlOrOpts, opts) {
+function promisingagent() {
     var method, url, query;
-    if (typeof urlOrOpts === 'string') {
-        method = methodOrUrl;
-        url = urlOrOpts;
-    } else {
-        url = methodOrUrl;
-        opts = urlOrOpts;
+    var args = Array.prototype.slice.call(arguments);
+    var strs = [];
+    for (var i = args.length - 1; i >= 0; i--) {
+        if (typeof args[i] === 'string') {
+            strs = strs.concat(args.splice(i, 1));
+        }
     }
-    opts = opts || {};
+    strs.reverse();
+    if (strs.length >= 2) {
+        method = strs[0];
+        url = strs[1];
+    } else if (strs[0]) {
+        if (methods.indexOf(strs[0].toLowerCase()) > -1) {
+            method = strs[0];
+        } else {
+            url = strs[0];
+        }
+    }
+    var opts = extend.apply(null, [true, {}].concat(args));
     method = (method||opts.method||'').toUpperCase() || 'GET';
+    url = url || opts.url;
     if (opts.query) {
         query = exports.querySerializer(opts.query);
         url += ~url.indexOf('?')
@@ -66,6 +106,12 @@ function promisingagent(methodOrUrl, urlOrOpts, opts) {
     if (opts.body) {
         request.send(opts.body);
     }
+    if (opts.headers) {
+        Object.keys(opts.headers).forEach(function (key) {
+            request.set(key.toLowerCase(), opts.headers[key]);
+        });
+        request.send(opts.body);
+    }
     return request;
 }
 
@@ -77,7 +123,7 @@ methods.forEach(function (method) {
     }
 });
 
-},{"bluebird":2,"methods":27,"qs":28,"superagent":33}],2:[function(require,module,exports){
+},{"bluebird":2,"extend":27,"qs":28,"superagent":33}],2:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -9800,50 +9846,97 @@ function base64DetectIncompleteChar(buffer) {
 }
 
 },{"buffer":5}],27:[function(require,module,exports){
+var hasOwn = Object.prototype.hasOwnProperty;
+var toStr = Object.prototype.toString;
+var undefined;
 
-var http = require('http');
+var isArray = function isArray(arr) {
+	if (typeof Array.isArray === 'function') {
+		return Array.isArray(arr);
+	}
 
-/* istanbul ignore next: implementation differs on version */
-if (http.METHODS) {
+	return toStr.call(arr) === '[object Array]';
+};
 
-  module.exports = http.METHODS.map(function(method){
-    return method.toLowerCase();
-  });
+var isPlainObject = function isPlainObject(obj) {
+	'use strict';
+	if (!obj || toStr.call(obj) !== '[object Object]') {
+		return false;
+	}
 
-} else {
+	var has_own_constructor = hasOwn.call(obj, 'constructor');
+	var has_is_property_of_method = obj.constructor && obj.constructor.prototype && hasOwn.call(obj.constructor.prototype, 'isPrototypeOf');
+	// Not own constructor property must be Object
+	if (obj.constructor && !has_own_constructor && !has_is_property_of_method) {
+		return false;
+	}
 
-  module.exports = [
-    'get',
-    'post',
-    'put',
-    'head',
-    'delete',
-    'options',
-    'trace',
-    'copy',
-    'lock',
-    'mkcol',
-    'move',
-    'purge',
-    'propfind',
-    'proppatch',
-    'unlock',
-    'report',
-    'mkactivity',
-    'checkout',
-    'merge',
-    'm-search',
-    'notify',
-    'subscribe',
-    'unsubscribe',
-    'patch',
-    'search',
-    'connect'
-  ];
+	// Own properties are enumerated firstly, so to speed up,
+	// if last one is own, then all properties are own.
+	var key;
+	for (key in obj) {}
 
-}
+	return key === undefined || hasOwn.call(obj, key);
+};
 
-},{"http":4}],28:[function(require,module,exports){
+module.exports = function extend() {
+	'use strict';
+	var options, name, src, copy, copyIsArray, clone,
+		target = arguments[0],
+		i = 1,
+		length = arguments.length,
+		deep = false;
+
+	// Handle a deep copy situation
+	if (typeof target === 'boolean') {
+		deep = target;
+		target = arguments[1] || {};
+		// skip the boolean and the target
+		i = 2;
+	} else if ((typeof target !== 'object' && typeof target !== 'function') || target == null) {
+		target = {};
+	}
+
+	for (; i < length; ++i) {
+		options = arguments[i];
+		// Only deal with non-null/undefined values
+		if (options != null) {
+			// Extend the base object
+			for (name in options) {
+				src = target[name];
+				copy = options[name];
+
+				// Prevent never-ending loop
+				if (target === copy) {
+					continue;
+				}
+
+				// Recurse if we're merging plain objects or arrays
+				if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
+					if (copyIsArray) {
+						copyIsArray = false;
+						clone = src && isArray(src) ? src : [];
+					} else {
+						clone = src && isPlainObject(src) ? src : {};
+					}
+
+					// Never move original objects, clone them
+					target[name] = extend(deep, clone, copy);
+
+				// Don't bring in undefined values
+				} else if (copy !== undefined) {
+					target[name] = copy;
+				}
+			}
+		}
+	}
+
+	// Return the modified object
+	return target;
+};
+
+
+},{}],28:[function(require,module,exports){
 module.exports = require('./lib/');
 
 },{"./lib/":29}],29:[function(require,module,exports){
@@ -13146,6 +13239,38 @@ module.exports = function (addHost) {
         .then(function (response) {
             test.ok(response.status && response.body);
             test.equal(response.body.method, 'POST');
+            test.equal(response.body.url, '/post?name=uz&arr%5B0%5D=1&arr%5B1%5D=2&arr%5B2%5D=3');
+            test.equal(response.body.body, 'hello=world&arr%5B0%5D=4&arr%5B1%5D=5&arr%5B2%5D=6');
+        });
+    });
+
+    tape('simple change headers and set url in opts', function (test) {
+        test.plan(6);
+        var request = promisingagent.post({
+            url: addHost('/post'),
+            headers: {
+                'x-custom': '1',
+                'x-custom-header': 'a',
+            },
+            query: {
+                name: 'uz',
+                arr: [1,2,3],
+            },
+            body: {
+                hello: 'world',
+                arr: [4,5,6],
+            },
+        }, {
+            headers: {
+                'x-custom-header': 'b',
+            },
+        }).end();
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'POST');
+            test.equal(response.body.headers['x-custom'], '1');
+            test.equal(response.body.headers['x-custom-header'], 'b');
             test.equal(response.body.url, '/post?name=uz&arr%5B0%5D=1&arr%5B1%5D=2&arr%5B2%5D=3');
             test.equal(response.body.body, 'hello=world&arr%5B0%5D=4&arr%5B1%5D=5&arr%5B2%5D=6');
         });

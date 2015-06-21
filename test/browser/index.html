@@ -1,6 +1,28 @@
 <!doctype html>
 
 <title>promisingagent tests</title>
+<script>
+(function(global) {
+  'use strict';
+  global.console = global.console || {};
+  var con = global.console;
+  var prop, method;
+  var empty = {};
+  var dummy = function() {};
+  var properties = 'memory'.split(',');
+  var methods = ('assert,clear,count,debug,dir,dirxml,error,exception,group,' +
+     'groupCollapsed,groupEnd,info,log,markTimeline,profile,profiles,profileEnd,' +
+     'show,table,time,timeEnd,timeline,timelineEnd,timeStamp,trace,warn').split(',');
+  while (prop = properties.pop()) if (!con[prop]) con[prop] = empty;
+  while (method = methods.pop()) if (!con[method]) con[method] = dummy;
+})(typeof window === 'undefined' ? this : window);
+if (!console.log.apply) { // fix for some version of IE9
+    console._log = console.log;
+    console.log = function (line) {
+        console._log(line);
+    };
+}
+</script>
 <!--[if lt IE 9]><script src="/ie8fix.js"></script><![endif]-->
 
 <body><script src="/test.js"></script></body>

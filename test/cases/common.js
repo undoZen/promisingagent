@@ -121,7 +121,7 @@ module.exports = function (addHost) {
         var request = promisingagent.post({
             url: addHost('/post'),
             headers: {
-                'user-agent': 'promisingagent',
+                'x-custom': '1',
                 'x-custom-header': 'a',
             },
             query: {
@@ -141,7 +141,7 @@ module.exports = function (addHost) {
         .then(function (response) {
             test.ok(response.status && response.body);
             test.equal(response.body.method, 'POST');
-            test.equal(response.body.headers['user-agent'], 'promisingagent');
+            test.equal(response.body.headers['x-custom'], '1');
             test.equal(response.body.headers['x-custom-header'], 'b');
             test.equal(response.body.url, '/post?name=uz&arr%5B0%5D=1&arr%5B1%5D=2&arr%5B2%5D=3');
             test.equal(response.body.body, 'hello=world&arr%5B0%5D=4&arr%5B1%5D=5&arr%5B2%5D=6');
