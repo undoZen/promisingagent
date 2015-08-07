@@ -37,6 +37,7 @@
     "browserify": "^10.2.1",
     "concat-stream": "^1.4.8",
     "destroy": "^1.0.3",
+    "is-browser": "^2.0.1",
     "istanbul-harmony": "^0.3.12",
     "tap-browser-color": "^0.1.2",
     "tape": "^4.0.0"

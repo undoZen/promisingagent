@@ -3,6 +3,7 @@ var tape = require('tape');
 var promisingagent = require('../../');
 var Promise = require('bluebird');
 var qs = require('qs');
+var isBrowser = require('is-browser');
 function serializer(query) {
     return qs.stringify(query, {arrayFormat: 'repeat'});
 }
@@ -63,17 +64,18 @@ module.exports = function (addHost) {
     });
 
     tape('reject connection error', function (test) {
-        test.plan(4);
-        var request = promisingagent(addHost('/destroy')).end();
+        test.plan(isBrowser ? 3 : 4);
+        var request = promisingagent('http://0.0.0.0/connection-error').end();
         test.ok(request instanceof Promise);
         request
         .then(function (response) {
-            console.log('this line should not be reached', response);
-        })
-        .catch(function (err) {
+            throw new Error('this line should not be reached', response);
+        }, function (err) {
             test.ok(!err.response);
             test.ok(err instanceof Error);
-            test.equal(err.code, 'ECONNRESET');
+            if (!isBrowser) {
+                test.equal(err.code, 'ECONNREFUSED');
+            }
         });
     });
 
