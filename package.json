@@ -8,17 +8,18 @@
   ],
   "scripts": {
     "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/node.js && istanbul report --report cobertura --report html --report text-summary",
-    "test-browser": "browserify test/cases/browser.js > test/browser/test.js && node test/browser/server"
+    "test-browser": "browserify test/cases/browser.js > test/browser/test.js && node test/browser/server",
+    "test-watch": "nodemon -w index.js -w test/ ./node_modules/.bin/tape test/cases/node.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/undoZen/promisingagent.git"
   },
   "keywords": [
-    "request",
-    "superagent",
+    "bluebird",
     "promise",
-    "bluebird"
+    "request",
+    "superagent"
   ],
   "author": "undoZen <opensource@undozen.com>",
   "license": "MIT",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "browserify": "^10.2.1",
     "concat-stream": "^1.4.8",
+    "destroy": "^1.0.3",
     "istanbul-harmony": "^0.3.12",
     "tap-browser-color": "^0.1.2",
     "tape": "^4.0.0"

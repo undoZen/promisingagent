@@ -79,16 +79,10 @@ function promisingagent() {
         }
     }
     strs.reverse();
-    if (strs.length >= 2) {
-        method = strs[0];
-        url = strs[1];
-    } else if (strs[0]) {
-        if (methods.indexOf(strs[0].toLowerCase()) > -1) {
-            method = strs[0];
-        } else {
-            url = strs[0];
-        }
+    if (methods.indexOf(strs[0].toLowerCase()) > -1) {
+        method = strs.shift();
     }
+    url = strs.join('');
     var opts = extend.apply(null, [true, {}].concat(args));
     method = (method||opts.method||'').toUpperCase() || 'GET';
     url = url || opts.url;

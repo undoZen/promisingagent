@@ -2,6 +2,7 @@
 var http = require('http');
 var fs = require('fs');
 var concat = require('concat-stream');
+var destroy = require('destroy');
 module.exports = http.createServer(function (req, res) {
     req.url = req.url.replace(/\/+/g, '/');
     var fstream;
@@ -11,6 +12,8 @@ module.exports = http.createServer(function (req, res) {
     } else if (req.url === '/test.js' || req.url === '/ie8fix.js') {
         fstream = fs.createReadStream(__dirname + '/browser' + req.url);
         res.writeHead(200, {'Content-Type': 'application/javascript; charset=utf-8'});
+    } else if (req.url === '/destroy') {
+        destroy(req);
     }
     if (fstream) {
         fstream.pipe(res);

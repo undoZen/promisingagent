@@ -19,6 +19,36 @@ module.exports = function (addHost) {
             test.equal(response.body.url, '/hello');
         });
     });
+    tape('concat url parts', function (test) {
+        test.plan(4);
+        var request = promisingagent(addHost(''), '/hello', '/world').end();
+        test.ok(request instanceof Promise);
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'GET');
+            test.equal(response.body.url, '/hello/world');
+        });
+    });
+    tape('post concat url parts', function (test) {
+        test.plan(5);
+        var request = promisingagent('POST', addHost(''), '/hello',
+            {
+                query: {hello: 'world'},
+            },
+            '/world',
+            {
+                body: {foo: 'bar'},
+            }).end();
+        test.ok(request instanceof Promise);
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'POST');
+            test.equal(response.body.url, '/hello/world?hello=world');
+            test.equal(response.body.body, 'foo=bar');
+        });
+    });
 
     tape('do not reject non-2xx response', function (test) {
         test.plan(4);
@@ -29,6 +59,21 @@ module.exports = function (addHost) {
             test.ok(response.status && response.body);
             test.equal(response.body.method, 'GET');
             test.equal(response.body.url, '/404');
+        });
+    });
+
+    tape('reject connection error', function (test) {
+        test.plan(4);
+        var request = promisingagent(addHost('/destroy')).end();
+        test.ok(request instanceof Promise);
+        request
+        .then(function (response) {
+            console.log('this line should not be reached', response);
+        })
+        .catch(function (err) {
+            test.ok(!err.response);
+            test.ok(err instanceof Error);
+            test.equal(err.code, 'ECONNRESET');
         });
     });
 
