@@ -31,7 +31,9 @@ var methods = [
     "trace",
     "unlock",
     "unsubscribe"
-];
+].map(function (method) {
+    return method.toUpperCase();
+});
 
 exports = module.exports = promisingagent;
 exports.Promise = Promise;
@@ -73,13 +75,18 @@ function promisingagent() {
     var method, url, query;
     var args = Array.prototype.slice.call(arguments);
     var strs = [];
-    for (var i = args.length - 1; i >= 0; i--) {
+    for (var i = 0; i < args.length;) {
         if (typeof args[i] === 'string') {
-            strs = strs.concat(args.splice(i, 1));
+            if (!method && methods.indexOf(args[i]) > -1) {
+                method = args.splice(i, 1)[0];
+            } else {
+                strs = strs.concat(args.splice(i, 1));
+            }
+        } else {
+            i += 1;
         }
     }
-    strs.reverse();
-    if (methods.indexOf(strs[0].toLowerCase()) > -1) {
+    if (methods.indexOf(strs[0].toUpperCase()) > -1) {
         method = strs.shift();
     }
     url = strs.join('');
@@ -109,9 +116,9 @@ function promisingagent() {
 }
 
 methods.forEach(function (method) {
-    var mu = method.toUpperCase();
+    var mu = method.toLowerCase();
     exports[method] = exports[mu] = promisingagent.bind(null, mu);
-    if (method === 'delete') {
+    if (method === 'DELETE') {
         exports.del = exports.DEL = exports['delete'];
     }
 });

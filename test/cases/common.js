@@ -51,6 +51,26 @@ module.exports = function (addHost) {
         });
     });
 
+    tape('post concat url parts', function (test) {
+        test.plan(5);
+        var request = promisingagent(addHost(''), 'POST', '/hello',
+            {
+                query: {hello: 'world'},
+            },
+            '/world',
+            {
+                body: {foo: 'bar'},
+            }).end();
+        test.ok(request instanceof Promise);
+        request
+        .then(function (response) {
+            test.ok(response.status && response.body);
+            test.equal(response.body.method, 'POST');
+            test.equal(response.body.url, '/hello/world?hello=world');
+            test.equal(response.body.body, 'foo=bar');
+        });
+    });
+
     tape('do not reject non-2xx response', function (test) {
         test.plan(4);
         var request = promisingagent(addHost('/404')).end();
