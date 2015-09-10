@@ -74,7 +74,6 @@ Request.prototype.end = (function(origEnd) {
 function promisingagent() {
     var method, url, query;
     var args = Array.prototype.slice.call(arguments);
-    console.log(args);
     var strs = [];
     for (var i = 0; i < args.length;) {
         if (typeof args[i] === 'string') {
