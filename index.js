@@ -74,24 +74,23 @@ Request.prototype.end = (function(origEnd) {
 function promisingagent() {
     var method, url, query;
     var args = Array.prototype.slice.call(arguments);
+    console.log(args);
     var strs = [];
     for (var i = 0; i < args.length;) {
         if (typeof args[i] === 'string') {
-            if (!method && methods.indexOf(args[i]) > -1) {
-                method = args.splice(i, 1)[0];
+            var part = args.splice(i, 1)[0]
+            if (!method && methods.indexOf(part) > -1) {
+                method = part;
             } else {
-                strs = strs.concat(args.splice(i, 1));
+                strs.push(part);
             }
         } else {
             i += 1;
         }
     }
-    if (methods.indexOf(strs[0].toUpperCase()) > -1) {
-        method = strs.shift();
-    }
     url = strs.join('');
-    var opts = extend.apply(null, [true, {}].concat(args));
-    method = (method||opts.method||'').toUpperCase() || 'GET';
+    var opts = extend.apply(null, [true, method ? {method: method} : {}].concat(args));
+    method = (opts.method||'').toUpperCase() || 'GET';
     url = url || opts.url;
     if (opts.query) {
         query = exports.querySerializer(opts.query);
@@ -115,10 +114,22 @@ function promisingagent() {
     return request;
 }
 
-methods.forEach(function (method) {
-    var mu = method.toLowerCase();
-    exports[method] = exports[mu] = promisingagent.bind(null, mu);
-    if (method === 'DELETE') {
-        exports.del = exports.DEL = exports['delete'];
-    }
-});
+function addMethods(fn) {
+    methods.forEach(function (method) {
+        var ml = method.toLowerCase();
+        fn[method] = fn[ml] = fn.bind(null, method);
+        if (method === 'DELETE') {
+            fn.del = fn.DEL = fn['delete'];
+        }
+    });
+}
+addMethods(promisingagent);
+
+promisingagent.extend = function extend () {
+    var args = Array.prototype.slice.call(arguments);
+    args.unshift(null);
+    var fn = this.bind.apply(this, args);
+    addMethods(fn);
+    fn.extend = promisingagent.extend;
+    return fn;
+};
