@@ -108,7 +108,6 @@ function promisingagent() {
         Object.keys(opts.headers).forEach(function (key) {
             request.set(key.toLowerCase(), opts.headers[key]);
         });
-        request.send(opts.body);
     }
     return request;
 }
