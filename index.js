@@ -106,7 +106,13 @@ function promisingagent() {
     }
     if (opts.headers) {
         Object.keys(opts.headers).forEach(function (key) {
-            request.set(key.toLowerCase(), opts.headers[key]);
+            var v = opts.headers[key];
+            if (typeof v === 'function') {
+                v = v.call(request);
+            }
+            if (typeof v === 'string') {
+                request.set(key.toLowerCase(), v);
+            }
         });
     }
     return request;
