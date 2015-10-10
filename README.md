@@ -40,6 +40,8 @@ promisingagent('POST', '/hello', {
 ```
 You can pass request object directly to promise customer or call it's `.then()` method directly, in this way the request object is like a lazy evaluated promise, `request.then(...)` will trigger it to start requesting.
 
+Some utility methods from bluebird were included, they are `then spread catch caught finnaly lastly bind tap call get return throw reflect`, so you can just `request('/some/get/method/api').get('body')`. refer [Bluebird API](https://github.com/petkaantonov/bluebird/blob/master/API.md#getstring-propertynameint-index---promise)
+
 note that in 2.0 promisingagent do not treat non-2xx response as error, behaves like using superagent@<1.0
 
 ## license
