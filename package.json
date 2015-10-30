@@ -28,17 +28,17 @@
   },
   "homepage": "https://github.com/undoZen/promisingagent#readme",
   "dependencies": {
-    "bluebird": "^2.9",
-    "extend": "^2.0.1",
-    "qs": "^3",
-    "superagent": "^1.2"
+    "bluebird": "^3",
+    "extend": "^3",
+    "qs": "^5",
+    "superagent": "^1"
   },
   "devDependencies": {
     "browserify": "^10.2.1",
     "concat-stream": "^1.4.8",
     "destroy": "^1.0.3",
     "is-browser": "^2.0.1",
-    "istanbul": "^0.3.19",
+    "istanbul": "^0.4",
     "tap-browser-color": "^0.1.2",
     "tape": "^4.0.0"
   }

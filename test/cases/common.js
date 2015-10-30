@@ -226,7 +226,7 @@ module.exports = function (addHost) {
     });
 
     tape('simple change headers and set url in opts', function (test) {
-        test.plan(6);
+        test.plan(7);
         var request = promisingagent.post({
             url: addHost('/post'),
             headers: {
@@ -243,7 +243,10 @@ module.exports = function (addHost) {
             },
         }, {
             headers: {
-                'x-custom-header': 'b',
+                'x-custom-header': function () {
+                    return 'b';
+                },
+                'non-func-nor-string': {'should be': 'ignored'},
             },
         }).end();
         request
@@ -251,6 +254,7 @@ module.exports = function (addHost) {
             test.ok(response.status && response.body);
             test.equal(response.body.method, 'POST');
             test.equal(response.body.headers['x-custom'], '1');
+            test.ok(!response.body.headers['non-func-nor-string']);
             test.equal(response.body.headers['x-custom-header'], 'b');
             test.equal(response.body.url, '/post?name=uz&arr%5B0%5D=1&arr%5B1%5D=2&arr%5B2%5D=3');
             test.equal(response.body.body, 'hello=world&arr%5B0%5D=4&arr%5B1%5D=5&arr%5B2%5D=6');

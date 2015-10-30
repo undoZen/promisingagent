@@ -32,6 +32,8 @@ function serializer(query) {
 }
 promisingagent.bodySerializer['application/x-www-form-urlencoded'] = serializer;
 promisingagent.querySerializer = serializer;
+promisingagent.defaultBodyType = 'form'; // defaults to form, could be json
+promisingagent.rejectNon2xx = false; // default, like superagent 0.x
 // then
 promisingagent('POST', '/hello', {
     query: {arr: [1, 2, 3]},

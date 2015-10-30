@@ -43,13 +43,14 @@ exports.querySerializer = qs.stringify;
 var serialize = exports.bodySerializer = superagent.serialize;
 serialize['application/x-www-form-urlencoded'] = qs.stringify;
 exports.defaultBodyType = 'form';
+exports.rejectNon2xx = false;
 
 Request.prototype.end = (function(origEnd) {
     return function (fn) {
         var self = this;
         this.promise = this.promise || new Promise(function (resolve, reject) {
             origEnd.call(self, function (err, response) {
-                if (err && !err.status) {
+                if (err && (promisingagent.rejectNon2xx || !err.status)) {
                     reject(err);
                 } else {
                     resolve(response);
