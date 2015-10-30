@@ -42,6 +42,7 @@ var Request = promisingagent.Request = superagent.Request;
 exports.querySerializer = qs.stringify;
 var serialize = exports.bodySerializer = superagent.serialize;
 serialize['application/x-www-form-urlencoded'] = qs.stringify;
+exports.defaultBodyType = 'form';
 
 Request.prototype.end = (function(origEnd) {
     return function (fn) {
@@ -99,7 +100,7 @@ function promisingagent() {
     }
     var request = new Request(method, url);
     if (method !== 'GET' && method !== 'HEAD') {
-        request.type(opts.type || 'form');
+        request.type(opts.type || promisingagent.defaultBodyType);
     }
     if (opts.body) {
         request.send(opts.body);
