@@ -123,7 +123,7 @@ function promisingagent() {
         cookies = Object.keys(cookies).map(function (k) {
             return k + '=' + cookies[k];
         }).join('; ');
-        request.cookies = cookies;
+        request.set('Cookie', cookies);
     }
     if (method !== 'GET' && method !== 'HEAD') {
         request.type(opts.type || promisingagent.defaultBodyType);
