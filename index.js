@@ -1,6 +1,7 @@
 'use strict';
 
 var Promise = require('bluebird');
+var cookie = require('cookie');
 var superagent = require('superagent');
 var qs = require('qs');
 var extend = require('extend');
@@ -100,16 +101,11 @@ function promisingagent() {
             : '?' + query;
     }
     var request = new Request(method, url);
-    if (method !== 'GET' && method !== 'HEAD') {
-        request.type(opts.type || promisingagent.defaultBodyType);
-    }
-    if (opts.body) {
-        request.send(opts.body);
-    }
+    var cookies = {};
     if (opts.headers) {
         Object.keys(opts.headers).forEach(function (key) {
-            key = key.toLowerCase();
             var v = opts.headers[key];
+            key = key.toLowerCase();
             if (!v) {
                 return;
             }
@@ -117,27 +113,23 @@ function promisingagent() {
                 v = v.call(request);
             }
             if (key === 'cookie' || key === 'cookies') {
-                if (typeof v === 'string') {
-                    v = v.split('&');
-                }
-                if (Array.isArray(v)) {
-                    v.forEach(function (cookiePair) {
-                        if (typeof cookiePair === 'string' && cookiePair.indexOf('=') > 0) {
-                            request.set('cookie', cookiePair);
-                        }
-                    });
-                } else {
-                    Object.keys(v).forEach(function (cookieKey) {
-                        var cookieValue = v[cookieKey];
-                        if (typeof cookieValue === 'string') {
-                            request.set('cookie', cookieKey + '=' + cookieValue);
-                        }
-                    });
-                }
+                extend(cookies, typeof v === 'string' ? cookie.parse(v) : v);
             } else if (typeof v === 'string') {
                 request.set(key, v);
             }
         });
+    }
+    if (Object.keys(cookies).length) {
+        cookies = Object.keys(cookies).map(function (k) {
+            return k + '=' + cookies[k];
+        }).join('; ');
+        request.cookies = cookies;
+    }
+    if (method !== 'GET' && method !== 'HEAD') {
+        request.type(opts.type || promisingagent.defaultBodyType);
+    }
+    if (opts.body) {
+        request.send(opts.body);
     }
     return request;
 }
