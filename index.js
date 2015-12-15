@@ -108,12 +108,34 @@ function promisingagent() {
     }
     if (opts.headers) {
         Object.keys(opts.headers).forEach(function (key) {
+            key = key.toLowerCase();
             var v = opts.headers[key];
+            if (!v) {
+                return;
+            }
             if (typeof v === 'function') {
                 v = v.call(request);
             }
-            if (typeof v === 'string') {
-                request.set(key.toLowerCase(), v);
+            if (key === 'cookie' || key === 'cookies') {
+                if (typeof v === 'string') {
+                    v = v.split('&');
+                }
+                if (Array.isArray(v)) {
+                    v.forEach(function (cookiePair) {
+                        if (typeof cookiePair === 'string' && cookiePair.indexOf('=') > 0) {
+                            request.set('cookie', cookiePair);
+                        }
+                    });
+                } else {
+                    Object.keys(v).forEach(function (cookieKey) {
+                        var cookieValue = v[cookieKey];
+                        if (typeof cookieValue === 'string') {
+                            request.set('cookie', cookieKey + '=' + cookieValue);
+                        }
+                    });
+                }
+            } else if (typeof v === 'string') {
+                request.set(key, v);
             }
         });
     }
