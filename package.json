@@ -31,7 +31,7 @@
     "bluebird": "^3",
     "cookie": "^0.2.3",
     "extend": "^3",
-    "qs": "^5",
+    "qs": "^6",
     "superagent": "^1"
   },
   "devDependencies": {
