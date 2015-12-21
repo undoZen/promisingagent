@@ -1,6 +1,6 @@
 {
   "name": "promisingagent",
-  "version": "4.4.2",
+  "version": "4.5.0",
   "description": "superagent wrapped with bluebird with convenient helpers",
   "main": "index.js",
   "files": [
