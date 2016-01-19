@@ -28,10 +28,10 @@
   },
   "homepage": "https://github.com/undoZen/promisingagent#readme",
   "dependencies": {
-    "bluebird": "^3",
+    "bluebird": "^2.10.2",
     "cookie": "^0.2.3",
     "extend": "^3",
-    "qs": "^6",
+    "qs": "^6.0.2",
     "superagent": "^1"
   },
   "devDependencies": {
