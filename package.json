@@ -32,7 +32,7 @@
     "cookie": "^0.2.3",
     "extend": "^3",
     "qs": "^6.0.2",
-    "superagent": "~1.6"
+    "superagent": "^1.7"
   },
   "devDependencies": {
     "browserify": "^10.2.1",

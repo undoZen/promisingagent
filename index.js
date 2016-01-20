@@ -67,7 +67,7 @@ Request.prototype.end = (function(origEnd) {
 
 // delegate promise methods so you can do something like promisingagent(url).then(...)
 // also delegate some handy utility methods from bluebird
-'then spread catch caught finnaly lastly bind tap call get return throw reflect'.split(' ').forEach(function (m) {
+'then spread catch caught finnaly lastly bind tap call return throw reflect'.split(' ').forEach(function (m) {
     Request.prototype[m] = function () {
         var promise = this.promise || this.end();
         return promise[m].apply(promise, arguments);
