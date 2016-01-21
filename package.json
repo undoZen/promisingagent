@@ -30,7 +30,7 @@
     "bluebird": "^2.9",
     "extend": "^2.0.1",
     "qs": "^3",
-    "superagent": "^1.2"
+    "superagent": "~1.6"
   },
   "devDependencies": {
     "browserify": "^10.2.1",
