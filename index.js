@@ -90,10 +90,13 @@ function promisingagent() {
             i += 1;
         }
     }
-    url = strs.join('');
     var opts = extend.apply(null, [true, method ? {method: method} : {}].concat(args));
+    if (typeof opts.url === 'string') {
+        strs.push(opts.url);
+        delete opts.url;
+    }
+    url = strs.join('');
     method = (opts.method||'').toUpperCase() || 'GET';
-    url = url || opts.url;
     if (opts.query) {
         query = exports.querySerializer(opts.query);
         url += ~url.indexOf('?')
