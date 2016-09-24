@@ -176,7 +176,7 @@ module.exports = function (addHost) {
         })
         .then(function (response) {
             test.equal(response.body.url, '/hello');
-            return promisingagent(addHost(response.body.url)).get('body').get('url');
+            return promisingagent(addHost(response.body.url)).then().get('body').get('url');
         })
         .then(function (url) {
             test.equal(url, '/hello');
