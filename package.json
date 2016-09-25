@@ -3,13 +3,10 @@
   "version": "5.3.1",
   "description": "superagent wrapped with bluebird with convenient helpers",
   "main": "index.js",
-  "browser": "browser.js",
   "files": [
-    "browser.js",
     "index.js"
   ],
   "scripts": {
-    "build": "node build.js",
     "test": "rm -rf coverage/ && prove --exec \"istanbul cover --include-pid --report none --print none\" test/cases/node.js && istanbul report --report cobertura --report html --report text-summary",
     "test-browser": "browserify test/cases/browser.js > test/browser/test.js && node test/browser/server",
     "test-watch": "nodemon -w index.js -w test/ ./node_modules/.bin/tape test/cases/node.js"
@@ -32,18 +29,18 @@
   "homepage": "https://github.com/undoZen/promisingagent#readme",
   "dependencies": {
     "bluebird": "^3",
+    "cookie": "^0.3.1",
+    "extend": "^3",
+    "superagent": "^1",
     "qs": "^6.2.1"
   },
   "devDependencies": {
     "browserify": "^13.1.0",
     "browserify-derequire": "^0.9.4",
-    "cookie": "^0.3.1",
-    "extend": "^3",
     "concat-stream": "^1.5.2",
     "destroy": "^1.0.4",
     "is-browser": "^2.0.1",
     "istanbul": "^0.4",
-    "superagent": "^1",
     "tap-browser-color": "^0.1.2",
     "tape": "^4.6.0"
   }
